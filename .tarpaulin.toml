@@ -1,0 +1,3 @@
+[default]
+# Exclude integration-only code from coverage
+# exclude-files = ["src/main.rs"]
