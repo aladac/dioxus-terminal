@@ -1,6 +1,6 @@
 [package]
 name = "dioxus-terminal"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
@@ -13,13 +13,13 @@ categories = ["gui", "command-line-interface"]
 alacritty_terminal = "0.25"
 portable-pty = "0.9"
 vte = "0.15"
-dioxus = { version = "0.6", features = ["desktop"] }
+dioxus = { version = "0.7", features = ["desktop"] }
 anyhow = "1"
 thiserror = "2"
 tokio = { version = "1", features = ["sync", "rt"] }
 
 [dev-dependencies]
-dioxus-ssr = "0.6"
+dioxus-ssr = "0.7"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
