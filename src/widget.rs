@@ -8,7 +8,8 @@ use crate::term::{Cell, Color, Grid};
 use crate::theme::Theme;
 
 /// Default monospace font stack
-pub const DEFAULT_FONT_FAMILY: &str = "JetBrains Mono, Menlo, Monaco, Consolas, ui-monospace, monospace";
+pub const DEFAULT_FONT_FAMILY: &str =
+    "JetBrains Mono, Menlo, Monaco, Consolas, ui-monospace, monospace";
 
 /// Props for the Terminal component
 #[derive(Props, Clone, PartialEq)]
@@ -37,11 +38,11 @@ pub struct TerminalProps {
     #[props(default = 13)]
     pub font_size: u16,
 
-    /// Font family (default: JetBrains Mono + fallbacks)
+    /// Font family (default: `JetBrains Mono` + fallbacks)
     #[props(default = DEFAULT_FONT_FAMILY.to_string())]
     pub font_family: String,
 
-    /// Color theme (default: Theme::dark())
+    /// Color theme (default: `Theme::dark()`)
     #[props(default)]
     pub theme: Theme,
 
@@ -67,11 +68,16 @@ fn default_shell() -> String {
 enum EscapeState {
     #[default]
     Normal,
-    Escape,      // Just saw ESC
-    Csi,         // In CSI sequence (ESC [)
+    Escape,    // Just saw ESC
+    Csi,       // In CSI sequence (ESC [)
+    Osc,       // In OSC sequence (ESC ]) - consume until BEL or ST
+    OscEscape, // In OSC, just saw ESC (looking for \)
+    Dcs,       // In DCS sequence (ESC P) - consume until ST
+    DcsEscape, // In DCS, just saw ESC (looking for \)
 }
 
 /// Terminal state shared between render and coroutine
+#[allow(clippy::struct_excessive_bools)]
 struct TermState {
     pty: Option<Pty>,
     cursor_row: usize,
@@ -99,17 +105,21 @@ pub fn Terminal(props: TerminalProps) -> Element {
     let fg_color = props.foreground.unwrap_or(props.theme.foreground);
 
     let mut grid = use_signal(|| Grid::new(rows, cols));
+    let mut cursor_pos = use_signal(|| (0usize, 0usize)); // (row, col)
 
     // Shared state for PTY and cursor
     let state = use_hook(|| {
         // If shell prop is set, use sh -c to run it
-        let (command, args): (String, Vec<String>) = if !props.shell.is_empty() {
-            ("sh".to_string(), vec!["-c".to_string(), props.shell.clone()])
-        } else {
+        let (command, args): (String, Vec<String>) = if props.shell.is_empty() {
             (props.command.clone(), props.args.clone())
+        } else {
+            (
+                "sh".to_string(),
+                vec!["-c".to_string(), props.shell.clone()],
+            )
         };
 
-        let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+        let args_refs: Vec<&str> = args.iter().map(String::as_str).collect();
         let pty = Pty::spawn(&command, &args_refs, props.rows, props.cols).ok();
 
         Arc::new(Mutex::new(TermState {
@@ -149,6 +159,8 @@ pub fn Terminal(props: TerminalProps) -> Element {
                     for byte in bytes {
                         process_byte(&mut s, &mut grid, byte, rows, cols);
                     }
+                    // Update cursor position signal
+                    cursor_pos.set((s.cursor_row, s.cursor_col));
                     drop(s);
                 }
 
@@ -196,11 +208,29 @@ pub fn Terminal(props: TerminalProps) -> Element {
                 for (row_idx, row) in grid.read().iter_rows().enumerate() {
                     div { class: "terminal-row", key: "{row_idx}",
                         for (col_idx, cell) in row.iter().enumerate() {
-                            span {
-                                key: "{col_idx}",
-                                class: "{cell.style.to_css_classes()}",
-                                style: "color: {cell.fg.to_css()}; background-color: {cell.bg.to_css()};",
-                                "{cell.c}"
+                            {
+                                let (cursor_row, cursor_col) = *cursor_pos.read();
+                                let is_cursor = row_idx == cursor_row && col_idx == cursor_col;
+                                // Use theme background for cells with default black bg
+                                let cell_bg = if cell.bg == Color::default_bg() {
+                                    bg_color
+                                } else {
+                                    cell.bg
+                                };
+                                // Invert colors for cursor (block cursor style)
+                                let (fg, bg) = if is_cursor {
+                                    (cell_bg.to_css(), fg_color.to_css())
+                                } else {
+                                    (cell.fg.to_css(), cell_bg.to_css())
+                                };
+                                rsx! {
+                                    span {
+                                        key: "{col_idx}",
+                                        class: "{cell.style.to_css_classes()}",
+                                        style: "color: {fg}; background-color: {bg};",
+                                        "{cell.c}"
+                                    }
+                                }
                             }
                         }
                     }
@@ -211,7 +241,13 @@ pub fn Terminal(props: TerminalProps) -> Element {
 }
 
 /// Process a single byte of terminal output
-fn process_byte(state: &mut TermState, grid: &mut Signal<Grid>, byte: u8, rows: usize, cols: usize) {
+fn process_byte(
+    state: &mut TermState,
+    grid: &mut Signal<Grid>,
+    byte: u8,
+    rows: usize,
+    cols: usize,
+) {
     match state.escape_state {
         EscapeState::Normal => match byte {
             // Escape - start escape sequence
@@ -242,8 +278,6 @@ fn process_byte(state: &mut TermState, grid: &mut Signal<Grid>, byte: u8, rows: 
                 let next_tab = (state.cursor_col / 8 + 1) * 8;
                 state.cursor_col = next_tab.min(cols - 1);
             }
-            // Bell - ignore
-            0x07 => {}
             // Printable characters
             0x20..=0x7e | 0x80..=0xff => {
                 let c = byte as char;
@@ -275,11 +309,42 @@ fn process_byte(state: &mut TermState, grid: &mut Signal<Grid>, byte: u8, rows: 
             _ => {}
         },
         EscapeState::Escape => {
-            if byte == b'[' {
-                state.escape_state = EscapeState::Csi;
-            } else {
-                // Not a CSI sequence, ignore and return to normal
+            match byte {
+                b'[' => state.escape_state = EscapeState::Csi,
+                b']' => state.escape_state = EscapeState::Osc,
+                b'P' => state.escape_state = EscapeState::Dcs,
+                // Single-character sequences - just ignore and return to normal
+                // ESC 7 (save cursor), ESC 8 (restore cursor), ESC c (reset), etc.
+                _ => state.escape_state = EscapeState::Normal,
+            }
+        }
+        EscapeState::Osc => {
+            // OSC sequences end with BEL (0x07) or ST (ESC \)
+            match byte {
+                0x07 => state.escape_state = EscapeState::Normal,
+                0x1b => state.escape_state = EscapeState::OscEscape,
+                _ => {} // Consume all other bytes
+            }
+        }
+        EscapeState::OscEscape => {
+            if byte == b'\\' {
                 state.escape_state = EscapeState::Normal;
+            } else {
+                state.escape_state = EscapeState::Osc;
+            }
+        }
+        EscapeState::Dcs => {
+            // DCS sequences end with ST (ESC \)
+            if byte == 0x1b {
+                state.escape_state = EscapeState::DcsEscape;
+            }
+            // Consume all other bytes
+        }
+        EscapeState::DcsEscape => {
+            if byte == b'\\' {
+                state.escape_state = EscapeState::Normal;
+            } else {
+                state.escape_state = EscapeState::Dcs;
             }
         }
         EscapeState::Csi => {

@@ -53,7 +53,7 @@ pub use error::Error;
 pub use pty::Pty;
 pub use term::{Cell, Color, Grid, Style};
 pub use theme::Theme;
-pub use widget::{Terminal, TerminalProps, DEFAULT_FONT_FAMILY};
+pub use widget::{DEFAULT_FONT_FAMILY, Terminal, TerminalProps};
 
 /// Result type for dioxus-terminal operations
 pub type Result<T> = std::result::Result<T, Error>;
