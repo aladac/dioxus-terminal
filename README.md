@@ -6,10 +6,9 @@ Built on [alacritty_terminal](https://crates.io/crates/alacritty_terminal) for t
 
 ## Features
 
-- Full terminal emulation (VT100/xterm compatible)
-- ANSI color support (16, 256, and true color)
-- Keyboard and mouse input
-- Scrollback buffer
+- Terminal emulation (VT100/xterm compatible)
+- ANSI color support (16 and 256 colors)
+- Keyboard input
 - Customizable themes
 
 ## Installation
@@ -64,6 +63,22 @@ Built-in themes:
 | `Theme::solarized_light()` | Solarized Light |
 | `Theme::light()` | Light theme |
 
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `shell` | `String` | `""` | Shell command (parsed via `sh -c`) |
+| `command` | `String` | `$SHELL` | Command to run |
+| `args` | `Vec<String>` | `[]` | Command arguments |
+| `rows` | `u16` | `24` | Terminal rows |
+| `cols` | `u16` | `120` | Terminal columns |
+| `theme` | `Theme` | `Theme::dark()` | Color theme |
+| `background` | `Option<Color>` | `None` | Override theme background |
+| `foreground` | `Option<Color>` | `None` | Override theme foreground |
+| `font_size` | `u16` | `13` | Font size in pixels |
+| `font_family` | `String` | JetBrains Mono + fallbacks | Font family |
+| `class` | `String` | `""` | CSS class for container |
+
 ## Customization
 
 ```rust
@@ -84,15 +99,18 @@ rsx! {
         shell: "bash",
         theme: Theme::dark(),
         background: Color::new(30, 30, 30),  // overrides theme bg
+        foreground: Color::new(200, 200, 200),
     }
 
-    // Custom theme
+    // Custom theme with font settings
     Terminal {
         shell: "fish",
         theme: Theme::new(
             Color::new(20, 20, 30),   // background
             Color::new(200, 200, 220), // foreground
         ),
+        font_size: 14,
+        font_family: "Fira Code, monospace".to_string(),
     }
 }
 ```

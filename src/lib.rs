@@ -7,11 +7,9 @@
 //!
 //! ## Features
 //!
-//! - Full terminal emulation (VT100/xterm compatible)
-//! - ANSI color support (16, 256, and true color)
-//! - Keyboard and mouse input
-//! - Scrollback buffer
-//! - Copy/paste support
+//! - Terminal emulation (VT100/xterm compatible)
+//! - ANSI color support (16 and 256 colors)
+//! - Keyboard input
 //! - Customizable themes
 //!
 //! ## Example
