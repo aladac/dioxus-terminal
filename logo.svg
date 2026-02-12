@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D4FF"/>
+      <stop offset="100%" style="stop-color:#00B4D8"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8547"/>
+      <stop offset="100%" style="stop-color:#FF6B35"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="white"/>
+
+  <!-- Terminal Window -->
+  <rect x="75" y="95" width="115" height="85" rx="8" fill="#1a1a2e" stroke="#374151" stroke-width="3"/>
+
+  <!-- Terminal title bar -->
+  <rect x="75" y="95" width="115" height="20" rx="8" fill="#374151"/>
+  <rect x="75" y="107" width="115" height="8" fill="#374151"/>
+
+  <!-- Terminal buttons -->
+  <circle cx="88" cy="105" r="4" fill="#FF6B35"/>
+  <circle cx="100" cy="105" r="4" fill="#FFB84D"/>
+  <circle cx="112" cy="105" r="4" fill="#00B4D8"/>
+
+  <!-- Terminal prompt -->
+  <text x="85" y="138" font-family="monospace" font-size="14" font-weight="bold" fill="#00B4D8">$</text>
+  <text x="98" y="138" font-family="monospace" font-size="14" fill="#e0e0e0">_</text>
+
+  <!-- Terminal cursor (blinking effect implied) -->
+  <rect x="108" y="126" width="8" height="14" fill="#FF6B35" opacity="0.9"/>
+
+  <!-- DNA Helix - Left strand (cyan) - positioned to the left -->
+  <path d="M30 25 Q10 55 30 85 Q50 115 30 145 Q10 175 30 195"
+        stroke="url(#cyanGrad)" stroke-width="14" fill="none" stroke-linecap="round"/>
+
+  <!-- DNA Helix - Right strand (orange) -->
+  <path d="M65 25 Q85 55 65 85 Q45 115 65 145 Q85 175 65 195"
+        stroke="url(#orangeGrad)" stroke-width="14" fill="none" stroke-linecap="round"/>
+
+  <!-- DNA Bars -->
+  <rect x="28" y="42" width="40" height="7" rx="2" fill="#374151"/>
+  <rect x="28" y="72" width="40" height="7" rx="2" fill="#374151"/>
+  <rect x="28" y="102" width="40" height="7" rx="2" fill="#374151"/>
+  <rect x="28" y="132" width="40" height="7" rx="2" fill="#374151"/>
+  <rect x="28" y="162" width="40" height="7" rx="2" fill="#374151"/>
+</svg>

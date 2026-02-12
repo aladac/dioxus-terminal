@@ -1,10 +1,16 @@
-# dioxus-terminal
-<hr/>
-<img width="1319" height="477" alt="Screenshot 2026-02-12 at 03 58 28" src="https://github.com/user-attachments/assets/794fcff9-8307-4306-9283-8c998d816e24" />
+<p align="center">
+  <img src="logo.png" alt="dioxus-terminal" width="120" />
+</p>
 
-<hr/>
+<h1 align="center">dioxus-terminal</h1>
 
-Terminal emulator widget for [Dioxus](https://dioxuslabs.com/) desktop applications.
+<p align="center">
+  Terminal emulator widget for <a href="https://dioxuslabs.com/">Dioxus</a> desktop applications.
+</p>
+
+<p align="center">
+  <img width="1319" alt="dioxus-terminal screenshot" src="https://github.com/user-attachments/assets/794fcff9-8307-4306-9283-8c998d816e24" />
+</p>
 
 Built on [alacritty_terminal](https://crates.io/crates/alacritty_terminal) for terminal emulation and [portable-pty](https://crates.io/crates/portable-pty) for cross-platform PTY support.
 
